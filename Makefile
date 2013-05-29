@@ -15,7 +15,7 @@ $(VIRTUALENV): $(VIRTUALENV)/bin/activate
 
 $(VIRTUALENV)/bin/activate: ./src/scrapper/requirements.txt
 	$(call chdir, src/scrapper)
-	test -d $(VIRTUALENV) || virtualenv $(VIRTUALENV)
+	test -d $(VIRTUALENV) || virtualenv --python=python2.7 $(VIRTUALENV)
 	. $(VIRTUALENV)/bin/activate; pip install -Ur requirements.txt
 	touch $(VIRTUALENV)/bin/activate
 
