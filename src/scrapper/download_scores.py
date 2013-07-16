@@ -250,7 +250,8 @@ def main():
             "35.html" : "Ciencias Sociales", 
             "45.html" : "Humanidades y Artes"}
     #the urls if the results
-    urls = ["Febrero2013/",
+    urls = ["Junio2013/",
+            "Febrero2013/",
             "Junio2012/",
             "Febrero2012/"]
     urls = map(lambda x: "https://servicios.dgae.unam.mx/" + x \
@@ -279,9 +280,19 @@ def main():
     unam.accepted = unam.accepted.map(str.strip)
     unam.id = unam.id.map(removeWhiteSpace)
     unam['major'][(unam.major == u"(405)  DISEﾅグ Y COMUNICACION VISUAL")] = u"(405)  DISEÑO Y COMUNICACION VISUAL"
+    unam['major'][(unam.major == u"(405)  DISEÑO Y COMUNICACION VISUAL")] = u"(405)  DISEÑO Y COMUNICACION VISUAL"
+
     unam['major'][(unam.major == u"(105)  DISEﾅグ INDUSTRIAL")] = u"(105)  DISEÑO INDUSTRIAL"
+    unam['major'][(unam.major == u"(105)  DISEÑO INDUSTRIAL")] = u"(105)  DISEÑO INDUSTRIAL"
+
+    unam['major'][(unam.major == u"(434)  ARTE Y DISEﾅグ")] = u"(434)  ARTE Y DISEÑO"
+
     unam['major'][(unam.major == u"(406)  DISEﾅグ GRAFICO")] = u"(406)  DISEÑO GRAFICO"
+    unam['major'][(unam.major == u"(406)  DISEÑO GRAFICO")] = u"(406)  DISEÑO GRAFICO"
+
     unam['major'][(unam.major == u"(408)  ENSEﾅアNZA DE INGLES")] = u"(408)  ENSEÑANZA DE INGLES"
+    unam['major'][(unam.major == u"(408)  ENSEÑANZA DE INGLES")] = u"(408)  ENSEÑANZA DE INGLES"
+
     unam['date'] = unam.id.map(getDate)
     unam.to_csv('../../clean-data/unam-admission.csv',
                 encoding='utf-8',
