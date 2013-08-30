@@ -64,6 +64,10 @@ def test(df, soup, url):
     We don't stop the execution when a test fails
     because there are errors in the UNAM's web pages
     """
+    # The following urls have errors and should not be checked
+    exceptions = ["https://servicios.dgae.unam.mx/Junio2012/resultados/4/4337005.html",
+                  "https://escolar0.unam.mx/Junio2011/resultados/3/3050075.html",
+                  "https://escolar0.unam.mx/Junio2011/resultados/3/3054005.html"]
     #total number of persons who took the test
     total = scrapeHeader("ASPIRANTES", soup)
     minimo = scrapeHeader("MINIMOS", soup)
@@ -80,7 +84,11 @@ def test(df, soup, url):
         print("value scraped: ", df.count(0)[1])
         print("scraping page: " + url)
         print("\n")
-        pass
+        if url in exceptions:
+            print "this is a known error. No exception raised\n"
+            pass
+        else:
+            raise
     #make sure the number of students accepted matches and
     #make sure the number of accepted students > 0
     try:
@@ -97,7 +105,12 @@ def test(df, soup, url):
             df[(df.accepted == "A")].score.astype("int").min())
         print("scraping page: " + url)
         print("\n")
-        pass
+        if url in exceptions:
+            print "this is a known error. No exception raised\n"
+            pass
+        else:
+            raise
+        raise
     # seleccionados = re.compile('SELECCIONADOS=([0-9]*)')
     # sel = seleccionados.search(str(soup)).group(1)
     # assert (res[(res.faculty == faculty) & 
@@ -279,19 +292,34 @@ def main():
     unam.score = unam.score.map(str.strip)
     unam.accepted = unam.accepted.map(str.strip)
     unam.id = unam.id.map(removeWhiteSpace)
-    unam['major'][(unam.major == u"(405)  DISEﾅグ Y COMUNICACION VISUAL")] = u"(405)  DISEÑO Y COMUNICACION VISUAL"
+    # Dear Future Diego, if for any reason you feel the need to consult
+    # the code in this file here's one tip: Do not use python 2.7 for
+    # unicode. This is so important that I'll have a cow say it
+    #
+    #__________________________________
+    # / Diego: Do not use Python 2.7 for \
+    # \ anything that requires unicode   /
+    #  ----------------------------------
+    #         \   ^__^
+    #          \  (oo)\_______
+    #             (__)\       )\/\
+    #                 ||----w |
+    #                 ||     ||
+    unam['major'][(unam.major == u"(405)  DISEﾃ前 Y COMUNICACION VISUAL")] = u"(405)  DISEÑO Y COMUNICACION VISUAL"
     unam['major'][(unam.major == u"(405)  DISEÑO Y COMUNICACION VISUAL")] = u"(405)  DISEÑO Y COMUNICACION VISUAL"
 
-    unam['major'][(unam.major == u"(105)  DISEﾅグ INDUSTRIAL")] = u"(105)  DISEÑO INDUSTRIAL"
+    unam['major'][(unam.major == u"(105)  DISEﾃ前 INDUSTRIAL")] = u"(105)  DISEÑO INDUSTRIAL"
     unam['major'][(unam.major == u"(105)  DISEÑO INDUSTRIAL")] = u"(105)  DISEÑO INDUSTRIAL"
 
-    unam['major'][(unam.major == u"(434)  ARTE Y DISEﾅグ")] = u"(434)  ARTE Y DISEÑO"
+    unam['major'][(unam.major == u"(434)  ARTE Y DISEﾃ前")] = u"(434)  ARTE Y DISEÑO"
 
-    unam['major'][(unam.major == u"(406)  DISEﾅグ GRAFICO")] = u"(406)  DISEÑO GRAFICO"
+    unam['major'][(unam.major == u"(406)  DISEﾃ前 GRAFICO")] = u"(406)  DISEÑO GRAFICO"
     unam['major'][(unam.major == u"(406)  DISEÑO GRAFICO")] = u"(406)  DISEÑO GRAFICO"
 
-    unam['major'][(unam.major == u"(408)  ENSEﾅアNZA DE INGLES")] = u"(408)  ENSEÑANZA DE INGLES"
+    unam['major'][(unam.major == u"(408)  ENSEĂ&lsquo;ANZA DE INGLES")] = u"(408)  ENSEÑANZA DE INGLES"
     unam['major'][(unam.major == u"(408)  ENSEÑANZA DE INGLES")] = u"(408)  ENSEÑANZA DE INGLES"
+
+    unam['faculty'][(unam.faculty == u"(02005)  ENAP")] = u"(02005)  ESCUELA NACIONAL DE ARTES PLASTICAS"
 
     unam['date'] = unam.id.map(getDate)
     unam.to_csv('../../clean-data/unam-admission.csv',
