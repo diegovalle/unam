@@ -2,8 +2,10 @@ language: python
 python:
   - "2.7"
 # command to install dependencies
+#the makefile takes care of this so no need to run it again
 #install: "pip install -r ./src/scrapper/requirements.txt --use-mirrors"
 # command to run tests
+#only run the python stuff since travis ci doesn't support r
 script: make virtualenv scrape
 branches:
   only:
