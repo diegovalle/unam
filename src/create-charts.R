@@ -58,9 +58,9 @@ plotMajors <- function(unam, area_sub, shapes = c(15:18,0:10), palette) {
   df$major <- with(df, reorder(major, median))
   
   ggplot(df,
-         aes(major, score, color = cu,
+         aes(major, score, color = cu, 
              group = faculty, shape = faculty)) +
-    geom_jitter(alpha = .8) +
+    geom_jitter(alpha = .8,) +
     stat_summary(fun.data = median_cl_boot, alpha=1,
                    color = "red", geom = "linerange") +
     stat_summary(fun.data = median_cl_boot, color = "black",
@@ -72,6 +72,7 @@ plotMajors <- function(unam, area_sub, shapes = c(15:18,0:10), palette) {
              override.aes = list(alpha = 1))) +
     scale_shape_manual(values= shapes) +
     scale_colour_manual(values = palette) +
+        scale_fill_manual(values = palette) +
     labs(title =str_c("Admission Scores - ", area_sub, " (Jun 2011-Jun 2013)")) +
     ylab("exam score")
 }
@@ -277,7 +278,7 @@ p <- ggplot(df, aes(yield, median)) +
 
 r1 <- rPlot(median ~ yield | area,
             data = df, type = "point", color = "location",
-                tooltip="function(item){return item.major +'\n' + 'Location: ' + item.faculty + '\n' + 'Median score: ' + item.median + '\n' + 'Percent accepted: ' + Math.round(item.yield*1000)/10 + '%'}",
+                tooltip="function(item){return item.major +'\n' + 'Location: ' + item.faculty + '\n' + 'Minimum score: ' + item.median + '\n' + 'Percent accepted: ' + Math.round(item.yield*1000)/10 + '%'}",
                 title = "Enlace", size =  list(const = 3.5))
 r1$facet(var = 'area', type = 'wrap', cols = 2)
 r1$guides(x = list(title = "percent admitted",
