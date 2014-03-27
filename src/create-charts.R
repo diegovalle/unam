@@ -2,7 +2,6 @@ library(ggplot2)
 library(zoo)
 library(stringr)
 library(plyr)
-options(stringsAsFactors = FALSE)
 library(directlabels)
 library(scales)
 library(gridExtra)
@@ -11,6 +10,8 @@ library(car)
 ##install_github('rCharts', 'ramnathv')
 library(rCharts)
 theme_set(theme_bw())
+options(stringsAsFactors = FALSE)
+
 
 
 addSource <- function(plot, text = "Data Source: Dirección General de Administración Escolar - UNAM") {
@@ -146,7 +147,7 @@ meds <- ddply(subset(unam,
                      accepted == "A"),
       .(major),
       summarise,
-      score = mean(score, na.rm = TRUE))
+      score = median(score, na.rm = TRUE))
 meds[order(-meds$score),]
 
 top.majors <-  c("ARTES VISUALES",
@@ -269,6 +270,7 @@ df <- ddply(unam, .(major, faculty, area), summarise,
 ##   addSave(p, str_c(field, "-yield.png"), 14, 7)
 ## }
 df$location <- isCU(df$faculty, TRUE)
+df$area <- str_replace(df$area, "Physical Sciences, Mathematics and Engineering", "STEM")
 p <- ggplot(df, aes(yield, median)) +
   geom_point(aes(color = location), size = 5) +
   geom_smooth(method = lm, formula = y ~ poly(x, 2), aes(group = location)) +
@@ -278,13 +280,13 @@ p <- ggplot(df, aes(yield, median)) +
 
 r1 <- rPlot(median ~ yield | area,
             data = df, type = "point", color = "location",
-                tooltip="function(item){return item.major +'\n' + 'Location: ' + item.faculty + '\n' + 'Minimum score: ' + item.median + '\n' + 'Percent accepted: ' + Math.round(item.yield*1000)/10 + '%'}",
+                tooltip="#! function(item){return item.major +'<brn>' + 'Location: ' + item.faculty + '<brn>' + 'Minimum score: ' + item.median + '<brn>' + 'Percent accepted: ' + Math.round(item.yield*1000)/10 + '%'} !#",
                 title = "Enlace", size =  list(const = 3.5))
 r1$facet(var = 'area', type = 'wrap', cols = 2)
 r1$guides(x = list(title = "percent admitted",
                 min = min(df$yield)-.03,
                 max = max(df$yield)+.03),
-              y = list(title = "minimum score",
+              y = list(title = "minimum score for admittance",
                 min = min(df$median)-5,
                 max = max(df$median)+15))
 df <- df[order(df$yield),]
@@ -300,8 +302,8 @@ r1$layer(data = subset(df.loess, location != "CU"), type = 'line',
              color = list(const = 'black'), copy_layer = TRUE, tooltip = NULL,
              size = list(const = 2))
 r1$addParams(title = "")
-r1$set(width = 600, height = 600)
-r1
+r1$set(width = 500, height = 600)
+r1$save(file.path("..", "html", "min-vs-admitted.html"), cdn = TRUE)
 
 df <- unam
 df$cu <- isCU(unam$faculty, TRUE)
@@ -432,3 +434,5 @@ p <- ggplot(ss, aes(scores, log.salaries, label = rownames(ss))) +
     theme_bw()
 addSave(p, "score_vs_salary.png",
         text = "Data Source: Suplemento Universitarios Reforma 2008 / Dirección General de Administración Escolar - UNAM")
+
+source("sankey.R")
