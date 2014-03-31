@@ -28,11 +28,11 @@ src/scrapper/$(VIRTUALENV)/bin/activate: $(REQUIREMENTS)
 
 scrape: ./clean-data/unam-admission.csv
 
-charts: create-charts.Rout
+charts: run-all.Rout
 
-create-charts.Rout: src/create-charts.R
+run-all.Rout: src/run-all.R
 	$(call chdir, src)	
-	R CMD BATCH --no-save create-charts.R
+	R CMD BATCH --no-save run-all.R
 
 png: graphs/png/mecatronica.svg.png
 

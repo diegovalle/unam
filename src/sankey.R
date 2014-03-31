@@ -1,7 +1,5 @@
-require(rCharts)
-require(RColorBrewer)
-library(classInt)
-library(lubridate)
+# On the left are all the students who applied to the UNAM, by major. 
+# On the right all those who gained admittance (June 2011 - June 2013)
 
 ddply(subset(unam, accepted == "A"), .(year(date)), summarise,
       sum = length(area))
@@ -36,8 +34,9 @@ sankeyPlot$set(
 sankeyPlot$save(file.path("..", "html", "major-major.html"))
 
 
-
-
+# 
+# On the left are all the students who applied to the UNAM, by area of study. 
+# On the right all those who gained admittance (June 2011 - June 2013)
 
 t <- ddply(unam, .(area, cu), summarise,
            sum = length(area))
@@ -74,7 +73,12 @@ sankeyPlot$set(
 )
 sankeyPlot$save(file.path("..", "html", "area-area.html"))
 
-
+# To enter the UNAM all students must declare a major, based on this choice they then 
+# take an admission exam in one of four basic areas. This is a flow chart of majors chosen 
+# by the students who passed the admission exam (June 2011 - June 2013). 
+# The leftmost nodes area the areas of study of the admission exam, 
+# then the campus locations (note that CU is itself divided into faculties) 
+# and then the majors
 t <- ddply(subset(unam, accepted == "A"), .(area, cu), summarise,
            sum = length(area))
 t2 <- ddply(subset(unam, accepted == "A" & cu == "CU"), .(cu, faculty), summarise,
@@ -88,17 +92,14 @@ t4 <- rbind(t,t2)
 t4 <- rbind(t4,t3)
 
 
-# The development version of googleVis is necessary for the Sankey chart
-library(devtools)
-install_github("mages/googleVis")
-require(googleVis)
+
 
 S <- gvisSankey(t4, from="source", 
                 to="target", weight="value",
                 options=list(
                   height=2050,
                   width=960,
-                  sankey="{link:{color:{fill:'lightblue'}}}"
+                  sankey="{link:{color:{fill:'lightblue', stroke: '#999', strokeWidth: .2, fillOpacity: 0.5 }}}"
                 ))
 
 print(S, "html", file = file.path("..", "html", "all-unam.html"))
@@ -119,6 +120,11 @@ print(S, "html", file = file.path("..", "html", "all-unam.html"))
 # )
 # sankeyPlot$save("all.html")
 
+
+#The size of a square is proportional to the number of students admitted, 
+#the greener the color the higher the median score. The data corresponds to 
+#all who applied to take the test from June 2011 to June 2013. 
+#Click on a square to view the data by major.
 t <- ddply(subset(unam, accepted == "A"), .(major, cu), summarise,
            sum = length(area), median = median(score))
 t$major <- str_c(t$major, " - ", t$median, " - ", t$cu)

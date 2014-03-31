@@ -1,146 +1,3 @@
-library(ggplot2)
-library(zoo)
-library(stringr)
-library(plyr)
-library(directlabels)
-library(scales)
-library(gridExtra)
-library(car)
-##require(devtools)
-##install_github('rCharts', 'ramnathv')
-library(rCharts)
-theme_set(theme_bw())
-options(stringsAsFactors = FALSE)
-
-
-
-addSource <- function(plot, text = "Data Source: Dirección General de Administración Escolar - UNAM") {
-  plot <- arrangeGrob(plot, 
-              sub = textGrob(text,
-                x = 0, hjust = -0.1, vjust=0.1,
-                gp = gpar(fontface = "italic", fontsize = 9,
-                  col = "gray50")))
-  return(plot)
-}
-
-saveChart <- function(p, filename, width = 9.60, height = 6.00) {
-  ggsave(filename = filename, plot = p, dpi = 100,
-         width = width, height = height)
-}
-
-
-median_cl_boot <- function(x, conf.int = 0.95, B = 1000, na.rm = TRUE, reps = FALSE) {
-    if (na.rm)
-        x <- x[!is.na(x)]
-    n <- length(x)
-    xm <- median(x)
-    if (n < 2)
-        return(data.frame(y = xm, ymin = NA, ymax = NA))
-    resamples <- lapply(1:B, function(i) sample(x, replace=T))
-    r.median <- sapply(resamples, median)
-    quant <- quantile(unlist(r.median),
-                      c((1 - conf.int)/2, (1 + conf.int)/2))
-    names(quant) <- NULL
-    Median <- median(x)
-    data.frame(y = Median,
-               ymin = quant[1],
-               ymax = quant[2])
-}
-
-
-
-plotMajors <- function(unam, area_sub, shapes = c(15:18,0:10), palette) {
-  df <- subset(unam, area == area_sub &
-              accepted == "A")
-  df <- ddply(df, .(major, faculty), transform,
-              median = median(score))
-  df <- ddply(df, .(major), transform, median = max(median))
-  df$faculty <- with(df, reorder(faculty, -score, mean))
-  df$major <- with(df, reorder(major, median))
-  
-  ggplot(df,
-         aes(major, score, color = cu, 
-             group = faculty, shape = faculty)) +
-    geom_jitter(alpha = .8,) +
-    stat_summary(fun.data = median_cl_boot, alpha=1,
-                   color = "red", geom = "linerange") +
-    stat_summary(fun.data = median_cl_boot, color = "black",
-                 geom = "point", show_guide = FALSE) +
-    coord_flip() +
-    guides(color = guide_legend("individual scores,\nby campus",
-             override.aes = list(alpha = 1)),
-           shape = guide_legend("median score (95% CI),\nby faculty/campus",
-             override.aes = list(alpha = 1))) +
-    scale_shape_manual(values= shapes) +
-    scale_colour_manual(values = palette) +
-        scale_fill_manual(values = palette) +
-    labs(title =str_c("Admission Scores - ", area_sub, " (Jun 2011-Jun 2013)")) +
-    ylab("exam score")
-}
-
-plotFaculties<- function(unam, area_sub) {
-  df <- subset(unam, area == area_sub &
-              accepted == "A")
-  ggplot(df, aes(reorder(faculty, score, median), score)) +
-    geom_jitter(alpha = .3) +
-    geom_boxplot(fill = "transparent", color = "red") +
-    ##stat_summary(fun.data = median_cl_boot, color = "red",
-    ##             geom = "crossbar", show_guide = FALSE) +
-    coord_flip() +
-    labs(title = str_c("Admission Scores - ", area_sub, " (Jun 2011‐Feb 2013)")) +
-    ylab("exam score") +
-    xlab("faculty")
-}
-
-addSave <- function(p, filename, width = 9.60, height = 6.00,
-                    text = "Data Source: Dirección General de Administración Escolar - UNAM") {
-  saveChart(addSource(p, text),
-            file.path("..", "graphs", filename),
-            width, height)
-}
-
-isCU <- function(vec, asbool = FALSE) {
-  ifelse(str_detect(vec, "FACULTAD") |
-         vec == "ESCUELA NACIONAL DE TRABAJO SOCIAL",
-         "CU",
-         if(asbool)
-           "Not CU"
-         else
-           vec)
-}
-
-
-##Load and clean the unam admission scores database
-unam <- read.csv("../clean-data/unam-admission.csv",
-                 stringsAsFactors = FALSE)
-## salaries <- read.csv("../data/salaries.csv", skip = 1)
-unam$faculty <- str_replace(unam$faculty, "\\([0-9]*\\)  ", "")
-unam$major <- str_replace(unam$major, "\\([0-9]*\\)  ", "")
-unam$date <- as.Date(as.yearmon(as.character(unam$date), "%b %Y"))
-unam$score <- as.numeric(unam$score)
-unam$cu <- isCU(unam$faculty)
-ddply(unam, .(date), summarise, sum = length(date))
-
-
-
-
-
-unam <- subset(unam,
-               !faculty %in%
-               c("U.  MULT.  DE DOCEN.  E INV. DE LA FAC. DE C., QRO.",
-                 "UMDI, JURIQUILLA, QRO.",
-                 "ESCUELA NACIONAL DE ESTUDIOS SUPERIORES UNIDAD LEON",
-                 "ESCUELA NACIONAL DE ESTUDIOS SUP. UNIDAD LEON",
-                 "ESCUELA NACIONAL DE ARTES PLASTICAS, PLANTEL TAXCO",
-                 "ESCUELA NACIONAL DE ESTUDIOS SUP. UNIDAD MORELIA",
-                 "CENTRO PENINSULAR EN HUMANIDADES Y CIENCIAS SOCIALES",
-                 "PLANTEL TAXCO, GRO"))
-unam$area <- car::recode(unam$area,
-                    '"Biológicas, Químicas y de la Salud"="Biological Sciences and Health";
-                    "Ciencias Físico-Matemáticas y las Ingenierías"="Physical Sciences, Mathematics and Engineering";
-                    "Ciencias Sociales"="Social Sciences";
-                    "Humanidades y Artes"="Humanities and Arts"')
-
 
 
 meds <- ddply(subset(unam, 
@@ -237,7 +94,7 @@ palettes <- list(bio, humanities,
 i <- 1
 for(major in levels(as.factor(unam$area))){
   p <- plotMajors(unam, major, shapes[[i]], palettes[[i]])
-  addSave(p, str_c(major, "-majors.svg"), 14, 7)
+  addSave(p, str_c(major, "-majors.svg"), 14, 8)
   i <- i + 1
 }
 
@@ -247,7 +104,6 @@ for(area in levels(as.factor(unam$area))) {
   addSave(p, str_c(area, "-faculty.svg"))
 }
 
-#plotFaculties(unam, levels(as.factor(unam$area))[1])
 
 p <- ggplot(unam,
             aes(score, group = accepted,
@@ -257,9 +113,61 @@ p <- ggplot(unam,
   scale_fill_manual("exam\nresult",
                     breaks = c("A", "R"), values = c("blue", "red"),
                     labels = c("accepted", "rejected")) +
-  labs(title = "Rejected and accepted students, by area of study (Jun 2011‐Feb 2013)")
+  labs(title = "Rejected and accepted students, by area of study (Jun 2011‐Jun 2013)")
 addSave(p, "rejected-area.svg")
 
+
+# histogram from the wasted talent page
+hist <- ddply(na.omit(unam), 
+                     .(score, area, accepted), summarise, total = length(score))
+hist$accepted <- str_replace(hist$accepted, "A", "Granted Admission")
+hist$accepted <- str_replace(hist$accepted, "R", "Denied Admission")
+names(hist) <- c("score", "area", "status", "total")
+r1 <- rPlot(y = "total", x = "bin(score,1)" , color = "status", data = hist, type = "bar",
+            tooltip="#! function(item){return 'Score: ' + item.score +'<brn>' + 'Total Students: ' + item.total + '<brn>' + 'Status: ' + item.status } !#",
+)
+r1$facet(var = "area", type = "wrap",rows = 2)
+r1$coord( type = "cartesian")
+r1$guides(
+          y = list(title = "number of students",
+                   min = 0,
+                   max = max(hist$total) + 1000),
+          x = list(title = "score", renderGrid = FALSE,
+                   min = 0,
+                   max = max(hist$score, na.rm = TRUE)))
+
+r1$set(width = 800, height = 600)
+r1$save(file.path("..", "html", "histogram.html"), cdn = TRUE)
+
+# If the UNAM allowed applicants to list two or more majors in order preference, 
+# scores would improve quite a bit (one standard deviation is 17 points), 
+# even more so among the lowest performing students. To create the synthetic 
+# score I assumed the same number of students would be admitted but ordered by 
+# top score for each area. This is not an entirely realistic assumption because 
+# not everyone would be willing to list more than one major or attend 
+# FES Zaragoza instead of FES Cuautitlan, but it does show that the UNAM is wasting talent.
+ideal <- ddply(subset(unam, accepted == "A"), 
+      .(area, accepted), summarise, median = median(score),
+      students = length(score))
+ideal$synthetic <- NA
+
+ddply(subset(unam, accepted == "A"), .(area), summarise, sd(score, na.rm = TRUE))
+naunam <- na.omit(unam[order(-unam$score), ])
+for(i in 1:4)
+  ideal$synthetic[i] <- median(
+    subset(naunam, area == ideal$area[i])$score[1:ideal$students[i]]
+  )
+ideal <- melt(ideal, id = c("area", "accepted", "students"))
+ideal$variable <- str_replace(ideal$variable, "median", "real median score")
+ideal$variable <- str_replace(ideal$variable, "synthetic", "synthetic score")
+
+n1 <- nPlot(value ~ area, group = 'variable', data = ideal, 
+      type = 'multiBarChart')
+n1$set(width = 900, height = 400)
+n1$save(file.path("..", "html", "improvement.html"), cdn = TRUE)
+
+# Percentage of students admitted to each major from June 2011 to June 2013. 
+# The black line corresponds to a quadratic model.
 df <- ddply(unam, .(major, faculty, area), summarise,
             yield = length(accepted[accepted == "A"]) / length(accepted),
             median = min(score[accepted == "A"]))
@@ -305,8 +213,16 @@ r1$addParams(title = "")
 r1$set(width = 500, height = 600)
 r1$save(file.path("..", "html", "min-vs-admitted.html"), cdn = TRUE)
 
+
+# table of percent admited by campus
 df <- unam
 df$cu <- isCU(unam$faculty, TRUE)
+kable(ddply(df, .(date, cu), summarise,
+      percentage = round(length(date[accepted == "A"]) / length(date), 3),
+      apply = length(date),
+      took_test = length(na.omit(score)),
+      admit = length(date[accepted == "A"])), format = "html")
+
 p <- ggplot(ddply(df, .(date, cu), summarise,
              sum = length(date[accepted == "A"]) / length(date)),
        aes(date, sum, group = cu, color = cu)) +
@@ -333,6 +249,7 @@ p <- ggplot(ddply(df, .(date, cu), summarise,
   ylab("median score")
 addSave(p, "median-admit.svg")
 
+
 demand <- ddply(unam, .(major, cu), summarise, sum = length(date))
 demand[order(demand$sum),]
 p <- ggplot(demand, aes(sum, reorder(major, sum, max), color = cu)) +
@@ -341,7 +258,7 @@ p <- ggplot(demand, aes(sum, reorder(major, sum, max), color = cu)) +
   scale_x_continuous(label = comma) +
   xlab("number of applicants") +
   ylab("major") +
-  labs(title = "Number of applicants at the UNAM (Jun 2011‐Feb 2013)")
+  labs(title = "Number of applicants at the UNAM (Jun 2011‐Jun 2013)")
 addSave(p, "demand.svg",
         width = 12, height = 15)
 
@@ -367,7 +284,12 @@ max(unam[unam$accepted == "R","score"], na.rm = TRUE)
 nrow(unam[unam$accepted == "R" & unam$score > 80, ])
 nrow(unam[unam$accepted == "A" & unam$score > 80, ])
 
-
+# Mechatronics engineering is similar to both mechanical and electronic engineering. 
+# As can be seen in the chart some of the students who were rejected from 
+# mechatronics scored higher than those who were accepted to mechanical and 
+# electronic engineering. Since the UNAM only allows each student to list one major 
+# as their choice, those rejected were excluded from the UNAM. The data is for the 
+# exam of Feb. 2013
 wasted <- subset(subset(unam, date == "2013-02-01"), (major == "INGENIERIA MECATRONICA") |
        (major == "INGENIERIA ELECTRICA Y ELECTRONICA" &
               accepted == "A") |
@@ -390,8 +312,42 @@ p <- ggplot(wasted, aes(major, score, color = accepted)) +
   labs(title = "Accepted or Rejected Students")
 addSave(p, "mecatronica.svg")
 
+#add jitter to x
+wasted$sitejitter <- as.numeric( as.factor(wasted$major )) - 1
+wasted$sitejitter <- wasted$sitejitter + runif( n = nrow(wasted), min = -0.3, max = 0.3)
+
+wasted$accepted <- str_replace(wasted$accepted, "A", "Granted Admission")
+wasted$accepted <- str_replace(wasted$accepted, "R", "Denied Admission")
+rwasted <- rPlot(
+  y = "sitejitter",
+  x = "score",
+  data = wasted,
+  color = "accepted",
+  type = 'point',
+  size = list( const = 3),
+  tooltip="#! function(item){return item.accepted +'<brn>' + 'Score:' + item.score } !#",
+  
+)
+rwasted$guides(
+  color = list(
+    numticks = 3,
+    title = "status",
+    opacity=.5
+  ),
+  y =  list(
+    numticks = 3,
+    labels = unique(wasted$major),
+    renderGrid = FALSE,
+    title = "major",
+    min = -.5,
+    max = 2.8
+  ),
+  x = list (title = "score", max=120)
+)
+rwasted$save(file.path("..", "html", "waste-mecatronica.html"), cdn = TRUE)
 
 
+# Chart of percent admitted to the best majors
 yield <- ddply(unam, .(major, accepted, date), summarise,
       total = length(accepted))
 yield <- ddply(yield, .(major, date), summarise, yield = total[1]/ total[2])
@@ -410,6 +366,8 @@ p <- ggplot(subset(yield, major %in% top.majors),
 p <- direct.label(p, "last.bumpup")
 addSave(p, "percent-admitted-top.png")
 
+
+# Starting salary and test scores
 allareas.a <- subset(unam, accepted == "A")
 allareas.cu.a <- allareas.a[grep("FACULTAD",allareas.a$faculty),]
 avscore <- function(str, df){
@@ -435,4 +393,69 @@ p <- ggplot(ss, aes(scores, log.salaries, label = rownames(ss))) +
 addSave(p, "score_vs_salary.png",
         text = "Data Source: Suplemento Universitarios Reforma 2008 / Dirección General de Administración Escolar - UNAM")
 
-source("sankey.R")
+
+# The admission exam to the UNAM is quite competitive and only a small percentage 
+# of those who apply get in. This chart compares the number of students 
+# that applied to study at the UNAM with those that were granted admission. 
+# The data corresponds to all who applied to take the test from June 2011 to June 2013.
+df <- ddply(subset(unam, accepted == "A"), .(major, cu), summarise,
+            median = median(score, na.rm = TRUE))
+df <- df[order(-df$median),]
+
+df$major <- str_c(df$major, " - ", df$cu)
+
+# There are four types of admission exam, each based on the area of study of the major 
+# the students chose. The data corresponds to all who applied to take the test from 
+# June 2011 to June 2013.
+df <- ddply(unam, .(area), summarise,
+            applied = length(accepted),
+            zadmitted = length(accepted[accepted == "A"]))
+df <- melt(df)
+names(df) <- c("area", "status", "students")
+
+r1 <- rPlot(students ~ status | area, data = df, type = "line")
+r1$facet(var = 'area', type = 'wrap', cols = 2)
+r1$guides(x = list(title = "status",
+                   labels = "#! function(value){
+  color_mapping = {zadmitted: 'admitted', applied: 'applied'}
+  return color_mapping[value];                  
+} !#"),
+          y = list(title = "number of students",
+                   min = 0,
+                   max = 170000))
+r1$layer(data = df, type = 'point', 
+         color = list(const = 'black'), copy_layer = TRUE, tooltip = NULL,
+         size = list(const = 2))
+r1$set(width = 500, height = 600)
+r1$save(file.path("..", "html", "area-area-sm.html"), cdn = TRUE)
+
+
+df <- ddply(unam, .(major, cu), summarise,
+            applied = length(accepted),
+            zadmitted = length(accepted[accepted == "A"]))
+df$temp <- str_replace(df$cu, "FES", "F")
+df$temp <- abbreviate(df$temp, minlength = 3, strict = TRUE)
+df$m <- str_c(abbreviate(df$major, 15), "-", df$temp)
+df$temp <- NULL
+df <- melt(df, id = c("m", "cu", "major"))
+names(df) <- c("m", "cu", "major", "status", "students")
+df <- df[order(-df$students),]
+#df$m <- str_sub(df$m, 1, 15) 
+
+r1 <- rPlot(students ~ status | m, data = df, type = "line")
+r1$facet( var = list( var = "m", levels = unique(df$m) ),
+         type = 'wrap', cols = 4)
+r1$guides(color=list(labels = c("a", "b"),
+                     numticks = 2),
+          x = list(title = "status", labels = c("admitted", "applied")),
+          y = list(title = "number of students", renderGrid = FALSE,
+                   numticks = 2,
+                   min = 0,
+                   max = max(df$students)+4000))
+r1$layer(data = df, type = 'point', 
+         color = list(const = 'black'), copy_layer = TRUE, 
+         tooltip="#! function(item){return item.status +'<brn>' + 'Students: ' + item.students + '<brn>' + 'Major: ' + item.major + '<brn>' + 'Campus: ' + item.cu } !#",
+         size = list(const = 2))
+r1$set(width = 800, height = 1600)
+r1$save(file.path("..", "html", "major-majorsm.html"), cdn = TRUE)
+
