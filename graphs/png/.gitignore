@@ -1,0 +1,5 @@
+src/scrapper/venv_p27/*
+*.pdf
+*.png
+*.svg
+*.Rout
