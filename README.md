@@ -10,3 +10,11 @@ The [web page](https://servicios.dgae.unam.mx/Junio2013/resultados/) where the t
 > Hecho en México, todos los derechos reservados 2009. Esta página puede ser reproducida con fines no lucrativos, siempre y cuando no se mutile, se cite la fuente completa y su dirección electrónica. De otra forma requiere permiso previo por escrito de la institución.
 
 The rest of this work is licensed under a [Creative Commons Attribution 3.0 Unported License](http://creativecommons.org/licenses/by/3.0/).
+
+To run you'll need Python 2.7 and R 3
+
+```
+make
+```
+
+Since the UNAM has the bad habit of erasing old pages the repository includes a cache of all the admission result pages in the cache directory
