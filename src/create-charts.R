@@ -312,14 +312,17 @@ p <- ggplot(wasted, aes(major, score, color = accepted)) +
   labs(title = "Accepted or Rejected Students")
 addSave(p, "mecatronica.svg")
 
-#add jitter to x
-wasted$sitejitter <- as.numeric( as.factor(wasted$major )) - 1
-wasted$sitejitter <- wasted$sitejitter + runif( n = nrow(wasted), min = -0.3, max = 0.3)
+
+wasted$jitter <- as.numeric( as.factor(wasted$major )) - 1
+wasted$jitter <- wasted$jitter + round(runif(n = nrow(wasted), min = -0.3, max = 0.3),2)
 
 wasted$accepted <- str_replace(wasted$accepted, "A", "Granted Admission")
 wasted$accepted <- str_replace(wasted$accepted, "R", "Denied Admission")
+wasted$date = NULL
+wasted <- na.omit(wasted)
+wasted = wasted[order(wasted$accepted),]
 rwasted <- rPlot(
-  y = "sitejitter",
+  y = "jitter",
   x = "score",
   data = wasted,
   color = "accepted",
@@ -342,10 +345,21 @@ rwasted$guides(
     min = -.5,
     max = 2.8
   ),
-  x = list (title = "score", max=120)
+  x = list (title = "score", max=126, min = 0)
 )
 rwasted$save(file.path("..", "html", "waste-mecatronica.html"), cdn = TRUE)
 
+# 
+# d1 <- dPlot(
+#   y = "score",
+#   x = "major",
+#   groups = c("major","accepted", "score"),
+#   data = wasted[,c("major","score", "accepted")],
+#   type = "bubble"
+# )
+# d1$yAxis( type = "addMeasureAxis" )
+# d1$xAxis( type = "addCategoryAxis" )
+# d1$save(file.path("..", "html", "waste-mecatronica.html"), cdn = TRUE)
 
 # Chart of percent admitted to the best majors
 yield <- ddply(unam, .(major, accepted, date), summarise,
@@ -382,7 +396,7 @@ salaries <- c(13364,12636,10969,10902,10870,10821,9747,9708,9704,9567,9372,8151)
 ss <- data.frame(scores, log.salaries = log(salaries))
 p <- ggplot(ss, aes(scores, log.salaries, label = rownames(ss))) +
     geom_point() +
-    xlab("Number of correct answers") +
+    xlab("Average number of correct answers") +
     #scale_y_log10() +
   ylab("log starting salary") +
     geom_smooth(method = lm) +
