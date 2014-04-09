@@ -17,4 +17,8 @@ To run you'll need Python 2.7 and R 3
 make
 ```
 
-Since the UNAM has the bad habit of erasing old pages the repository includes a cache of all the admission result pages in the cache directory
+Since the UNAM has the bad habit of erasing old pages the repository includes a cache of all the admission result pages in the cache directory. There's also a copy of the database containing all the data from June 2011 to Feb. 2014 (note that the analysis is only up to June 2013)
+
+```
+clean-data\unam-admission.csv
+```
