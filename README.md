@@ -11,13 +11,13 @@ The [web page](https://servicios.dgae.unam.mx/Junio2013/resultados/) where the t
 
 The rest of this work is licensed under a [Creative Commons Attribution 3.0 Unported License](http://creativecommons.org/licenses/by/3.0/).
 
-To run you'll need Python 2.7 and R 3
+To run you'll need Python 2.7, R 3, and imagemagick. The program was tested on Ubuntu
 
 ```
 make
 ```
 
-Since the UNAM has the bad habit of erasing old pages the repository includes a cache of all the admission result pages in the cache directory. There's also a copy of the database containing all the data from June 2011 to Feb. 2014 (note that the analysis is only up to June 2013)
+Since the UNAM has the bad habit of erasing old pages the repository includes a cache of all the admission result pages in the cache directory. There's also a copy of the database containing all the data from June 2011 to Feb. 2014 (note that the analysis is only up to June 2013, since the scrapper still worked, I added the Feb. 2014 data) 
 
 ```
 clean-data\unam-admission.csv
