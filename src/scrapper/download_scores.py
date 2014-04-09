@@ -67,7 +67,12 @@ def test(df, soup, url):
     # The following urls have errors and should not be checked
     exceptions = ["https://servicios.dgae.unam.mx/Junio2012/resultados/4/4337005.html",
                   "https://escolar0.unam.mx/Junio2011/resultados/3/3050075.html",
-                  "https://escolar0.unam.mx/Junio2011/resultados/3/3054005.html"]
+                  "https://escolar0.unam.mx/Junio2011/resultados/3/3054005.html",
+                  "https://servicios.dgae.unam.mx/Febrero2014/resultados/1/1020015.html",
+                  "https://servicios.dgae.unam.mx/Febrero2014/resultados/2/2100195.html",
+                  "https://servicios.dgae.unam.mx/Febrero2014/resultados/3/3010065.html",
+                  "https://servicios.dgae.unam.mx/Febrero2014/resultados/3/3020045.html",
+                  "https://servicios.dgae.unam.mx/Febrero2014/resultados/3/3040065.html"]
     #total number of persons who took the test
     total = scrapeHeader("ASPIRANTES", soup)
     minimo = scrapeHeader("MINIMOS", soup)
@@ -263,7 +268,8 @@ def main():
             "35.html" : "Ciencias Sociales", 
             "45.html" : "Humanidades y Artes"}
     #the urls if the results
-    urls = ["Junio2013/",
+    urls = ["Febrero2014/",
+            "Junio2013/",
             "Febrero2013/",
             "Junio2012/",
             "Febrero2012/"]
@@ -271,7 +277,7 @@ def main():
                + "resultados/", urls)
     #For some reason the June 2011 results are stored in a different server
     urls.append("https://escolar0.unam.mx/Junio2011/resultados/")
-   
+    
     ## Scrape the data for each of the exam dates    
     for url in urls:
         #The results are grouped by area 15 == Math / Engineering
