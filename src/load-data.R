@@ -30,4 +30,4 @@ unam$area <- car::recode(unam$area,
                     "Ciencias Físico-Matemáticas y las Ingenierías"="Physical Sciences, Mathematics and Engineering";
                     "Ciencias Sociales"="Social Sciences";
                     "Humanidades y Artes"="Humanities and Arts"')
-
+unam <- subset(unam, date != as.Date("2014-02-01"))
