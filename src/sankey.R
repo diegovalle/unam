@@ -125,22 +125,42 @@ print(S, "html", file = file.path("..", "html", "all-unam.html"))
 #the greener the color the higher the median score. The data corresponds to 
 #all who applied to take the test from June 2011 to June 2013. 
 #Click on a square to view the data by major.
-t <- ddply(subset(unam, accepted == "A"), .(major, cu), summarise,
-           sum = length(area), median = median(score))
-t$major <- str_c(t$major, " - ", t$median, " - ", t$cu)
-t <- rbind(t, data.frame(major = ddply(t, .(cu), summarise,
-                                       sum = sum(sum))$cu,
-           cu = "Admitted",
-           sum= ddply(t, .(cu), summarise,
-                      sum = sum(sum))$sum,
-           median = ddply(subset(unam, accepted == "A"), .(cu), summarise,
-                          median = median(score))$median))
-t <- rbind(t, data.frame(major = "Admitted",
+df <- unam
+t <- ddply(df, .(major, cu), summarise,
+           sum = length(area[accepted == "A"]), 
+           median = median(score[accepted == "A"]),
+           percentage = round(length(date[accepted == "A"]) / length(date), 3),
+           apply = length(date),
+           took_test = length(na.omit(score)),
+           admit = length(date[accepted == "A"]))
+t$major <- str_c(t$major, ", ", t$cu, " (", t$median, ")")
+byCampus <- ddply(unam, .(cu), summarise,
+                  sum = length(area[accepted == "A"]), 
+                  median = median(score[accepted == "A"]),
+                  percentage = round(length(date[accepted == "A"]) / length(date), 3),
+                  apply = length(date),
+                  took_test = length(na.omit(score)),
+                  admit = length(date[accepted == "A"]))
+names(byCampus) <- c("major", "sum", "median", "percentage", "apply", "took_test", 
+                     "admit")
+byCampus$cu <- "Admitted"
+t <- rbind(t, byCampus)
+t <- rbind.fill(t, data.frame(major = "Admitted",
                          sum = nrow(subset(unam, accepted == "A")),
                          cu = NA,
                          median = NA))
+t$percentage <- str_c(round(t$percentage * 100, 1), "%")
 
 colors <- brewer.pal(9, "Greens")
+
+## The version for the webpage replaces the json data generated with googleVis
+## with that from the internal function toJSONarray(t). This is to include
+## all the columns necessary for the tooltip
+# 
+# function showStaticTooltip(row, size, value) {
+#   return '<div style="background:#fd9; padding:10px; border-style:solid">' +
+#     'Granted Admitance: ' + data.getValue(row, 2) + '<br>' + 'Median Score: ' + data.getValue(row, 3) + '<br>' + 'Percentage Admitted: ' + data.getValue(row, 4) +'<br>' + 'Applied: ' + data.getValue(row, 5) +'<br>' + 'Took Test: ' + data.getValue(row, 6) +'</div>';
+# }
 
 
 Tree <- gvisTreeMap(t, idvar="major", parentvar="cu",
